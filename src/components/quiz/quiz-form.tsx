@@ -279,7 +279,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                 </div>
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <Label>Questions (JSON)</Label>
+                        <Label>Questions (JSON format)</Label>
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
@@ -325,7 +325,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                              <MonacoEditor
                                 height="400px"
                                 language="json"
-                                theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
+                                theme={theme === 'dark' ? 'vs-dark' : 'light'}
                                 value={field.value}
                                 options={{
                                     automaticLayout: true,
