@@ -10,8 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import type EditorType from "monaco-editor";
 import { HelpCircle, Copy } from "lucide-react";
+import { useTheme } from "next-themes";
 
-import type { Quiz, Question } from "@/lib/types";
+import type { Quiz, Question, Option } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,7 +43,7 @@ const questionSchema = z.object({
   compositeOptions: z.array(z.string()).optional(),
 }).refine(data => {
     if (data.type === 'multi-choice') {
-        return Array.isArray(data.answer);
+        return Array.isArray(data.answer) && data.answer.every(item => typeof item === 'string');
     }
     if (data.type === 'single-choice' || data.type === 'composite') {
         return typeof data.answer === 'string';
@@ -71,6 +72,9 @@ const formSchema = z.object({
         z.array(questionSchema).parse(parsed);
         return true;
     } catch (e) {
+        if (e instanceof z.ZodError) {
+            // This is intentional
+        }
         return false;
     }
   }, { message: "The questions JSON structure is invalid. Check the help section for the correct format." }),
@@ -179,6 +183,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     const router = useRouter();
     const { toast } = useToast();
     const editorRef = useRef<EditorType.editor.IStandaloneCodeEditor | null>(null);
+    const { theme } = useTheme();
 
     const {
         control,
@@ -282,7 +287,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                                     Help
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl w-full max-h-[90svh] overflow-y-auto sm:max-w-2xl">
+                            <DialogContent className="w-full max-w-2xl max-h-[90svh] overflow-y-auto sm:max-w-2xl">
                                 <DialogHeader>
                                     <DialogTitle>JSON Structure Help</DialogTitle>
                                     <DialogDescription>
@@ -320,7 +325,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                              <MonacoEditor
                                 height="400px"
                                 language="json"
-                                theme="vs-light"
+                                theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
                                 value={field.value}
                                 options={{
                                     automaticLayout: true,

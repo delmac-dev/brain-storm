@@ -9,6 +9,7 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "./theme-toggle";
 
 const navLinks = [
   { href: "/", label: "Quizzes" },
@@ -42,6 +43,7 @@ export function Header() {
           ))}
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
+          <ThemeToggle />
            {/* Mobile Nav */}
           <div className="md:hidden">
             <Sheet>
