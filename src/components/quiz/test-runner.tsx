@@ -83,10 +83,11 @@ export function TestRunner({ quiz }: TestRunnerProps) {
             onValueChange={handleSingleChoiceChange} 
             disabled={isSubmitted} 
             className="space-y-3"
+            key={question.id}
           >
             {question.options?.map((option) => (
-              <Label key={option.key} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && (question.answer === option.key ? 'border-green-500 bg-green-500/10' : selectedAnswer === option.key ? 'border-red-500 bg-red-500/10' : ''))}>
-                <RadioGroupItem value={option.key} />
+              <Label key={`${question.id}-${option.key}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && (question.answer === option.key ? 'border-green-500 bg-green-500/10' : selectedAnswer === option.key ? 'border-red-500 bg-red-500/10' : ''))}>
+                <RadioGroupItem value={option.key} id={`${question.id}-${option.key}`} />
                 <span>{option.text}</span>
               </Label>
             ))}
@@ -95,7 +96,7 @@ export function TestRunner({ quiz }: TestRunnerProps) {
       case "multi-choice":
       case "composite":
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" key={question.id}>
             {question.type === 'composite' && (
               <div className="space-y-2 rounded-md bg-muted p-4 mb-4">
                 {question.compositeOptions?.map((statement, index) => (
@@ -104,8 +105,9 @@ export function TestRunner({ quiz }: TestRunnerProps) {
               </div>
             )}
             {question.options?.map((option) => (
-              <Label key={option.key} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && ((question.answer as string[]).includes(option.key) ? 'border-green-500 bg-green-500/10' : (selectedAnswer as string[] | null)?.includes(option.key) ? 'border-red-500 bg-red-500/10' : ''))}>
+              <Label key={`${question.id}-${option.key}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && ((question.answer as string[]).includes(option.key) ? 'border-green-500 bg-green-500/10' : (selectedAnswer as string[] | null)?.includes(option.key) ? 'border-red-500 bg-red-500/10' : ''))}>
                 <Checkbox
+                  id={`${question.id}-${option.key}`}
                   value={option.key}
                   checked={(selectedAnswer as string[] | null)?.includes(option.key)}
                   onCheckedChange={() => handleMultiChoiceChange(option.key)}
@@ -123,10 +125,11 @@ export function TestRunner({ quiz }: TestRunnerProps) {
             onValueChange={handleTrueFalseChange} 
             disabled={isSubmitted} 
             className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+            key={question.id}
           >
             {[true, false].map((value) => (
-                <Label key={String(value)} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", selectedAnswer === value && 'ring-2 ring-primary', isSubmitted && (question.answer === value ? 'border-green-500 bg-green-500/10' : selectedAnswer === value ? 'border-red-500 bg-red-500/10' : ''))}>
-                  <RadioGroupItem value={String(value)} />
+                <Label key={`${question.id}-${String(value)}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", selectedAnswer === value && 'ring-2 ring-primary', isSubmitted && (question.answer === value ? 'border-green-500 bg-green-500/10' : selectedAnswer === value ? 'border-red-500 bg-red-500/10' : ''))}>
+                  <RadioGroupItem value={String(value)} id={`${question.id}-${String(value)}`} />
                   <span>{String(value)}</span>
                 </Label>
             ))}
