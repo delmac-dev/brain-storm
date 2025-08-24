@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrainCircuit, Menu } from "lucide-react";
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const navLinks = [
   { href: "/", label: "Quizzes" },
@@ -51,6 +52,9 @@ export function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left">
+                <VisuallyHidden.Root>
+                  <SheetTitle>Mobile Navigation Menu</SheetTitle>
+                </VisuallyHidden.Root>
                 <Link href="/" className="flex items-center space-x-2 mb-6">
                   <BrainCircuit className="h-6 w-6 text-primary" />
                   <span className="font-bold">BrainBoost</span>
