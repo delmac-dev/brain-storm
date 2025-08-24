@@ -58,7 +58,6 @@ const formSchema = z.object({
         return true;
     } catch (e) {
         if (e instanceof z.ZodError) {
-            console.error(e.errors);
         }
         return false;
     }
@@ -290,10 +289,12 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                                         <CodeBlock code={sampleJsonStructure} />
                                     </TabsContent>
                                     <TabsContent value="ai-prompt">
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Copy the prompt below and paste it into any AI tool that accepts file uploads (like a PDF of your questions). The AI will generate the JSON for you.
-                                        </p>
-                                        <CodeBlock code={aiPrompt} />
+                                        <div className="flex flex-col gap-4">
+                                            <p className="text-sm text-muted-foreground">
+                                                Copy the prompt below and paste it into any AI tool that accepts file uploads (like a PDF of your questions). The AI will generate the JSON for you.
+                                            </p>
+                                            <CodeBlock code={aiPrompt} />
+                                        </div>
                                     </TabsContent>
                                 </Tabs>
                             </DialogContent>
@@ -343,5 +344,3 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     </form>
   );
 }
-
-    
