@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Brain, CheckCircle, Clock, Percent, Repeat, FileJson, MoreVertical, Edit, Trash2 } from "lucide-react";
 import type { Quiz } from "@/lib/types";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,14 +32,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useQuizStore } from "@/store/quiz";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface QuizCardProps {
   quiz: Quiz;
-  onEdit: () => void;
   onDelete: () => void;
 }
 
-export function QuizCard({ quiz, onEdit, onDelete }: QuizCardProps) {
+export function QuizCard({ quiz, onDelete }: QuizCardProps) {
+    const router = useRouter();
     const retakeTest = useQuizStore((state) => state.retakeTest);
     const { toast } = useToast();
 
@@ -57,6 +57,12 @@ export function QuizCard({ quiz, onEdit, onDelete }: QuizCardProps) {
     const handleDropdownSelect = (e: React.SyntheticEvent) => {
         e.preventDefault();
         e.stopPropagation();
+    }
+
+    const handleEdit = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      router.push(`/quiz/edit/${quiz.id}`);
     }
 
   return (
@@ -78,7 +84,7 @@ export function QuizCard({ quiz, onEdit, onDelete }: QuizCardProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={handleDropdownSelect}>
-                    <DropdownMenuItem onClick={onEdit}>
+                    <DropdownMenuItem onClick={handleEdit}>
                       <Edit className="mr-2 h-4 w-4" />
                       <span>Edit</span>
                     </DropdownMenuItem>

@@ -10,14 +10,11 @@ import { QuizCard } from "@/components/quiz/quiz-card";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { useQuizStore } from "@/store/quiz";
 import { Skeleton } from "@/components/ui/skeleton";
-import { QuizForm } from "@/components/quiz/quiz-form";
 import type { Quiz } from "@/lib/types";
 
 export default function Home() {
-  const { quizzes, addQuiz, updateQuiz, deleteQuiz } = useQuizStore();
+  const { quizzes, deleteQuiz } = useQuizStore();
   const hasMounted = useHasMounted();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,28 +33,10 @@ export default function Home() {
       opacity: 1,
     },
   };
-  
-  const handleNewQuiz = () => {
-    setEditingQuiz(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditQuiz = (quiz: Quiz) => {
-    setEditingQuiz(quiz);
-    setIsFormOpen(true);
-  }
 
   const handleDeleteQuiz = (quizId: string) => {
     deleteQuiz(quizId);
   }
-
-  const handleFormSubmit = (quiz: Quiz) => {
-    if (editingQuiz) {
-      updateQuiz(quiz);
-    } else {
-      addQuiz(quiz);
-    }
-  };
 
   const renderSkeletons = () => (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -89,9 +68,11 @@ export default function Home() {
             Select a quiz to test your knowledge or create a new one.
           </p>
         </div>
-        <Button onClick={handleNewQuiz}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Quiz
+        <Button asChild>
+            <Link href="/quiz/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Quiz
+            </Link>
         </Button>
       </motion.div>
 
@@ -108,7 +89,6 @@ export default function Home() {
             <motion.div key={quiz.id} variants={itemVariants}>
               <QuizCard 
                 quiz={quiz} 
-                onEdit={() => handleEditQuiz(quiz)} 
                 onDelete={() => handleDeleteQuiz(quiz.id)}
               />
             </motion.div>
@@ -127,19 +107,14 @@ export default function Home() {
           <p className="mt-1 text-sm text-muted-foreground">
             Get started by creating a new quiz.
           </p>
-          <Button onClick={handleNewQuiz} className="mt-6">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Quiz
+          <Button asChild className="mt-6">
+            <Link href="/quiz/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create Quiz
+            </Link>
           </Button>
         </motion.div>
       )}
-
-      <QuizForm
-        isOpen={isFormOpen}
-        setIsOpen={setIsFormOpen}
-        quiz={editingQuiz}
-        onSubmit={handleFormSubmit}
-      />
     </div>
   );
 }

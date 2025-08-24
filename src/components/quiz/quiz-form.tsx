@@ -6,21 +6,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import dynamic from "next/dynamic";
 import { v4 as uuidv4 } from "uuid";
+import { useRouter } from "next/navigation";
 
 import type { Quiz, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const JsonEditor = dynamic(() => import('@/components/quiz/json-editor'), {
     ssr: false,
@@ -33,13 +27,13 @@ const formSchema = z.object({
 });
 
 interface QuizFormProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
   quiz?: Quiz | null;
   onSubmit: (data: Quiz) => void;
+  isEdit?: boolean;
 }
 
-export function QuizForm({ isOpen, setIsOpen, quiz, onSubmit }: QuizFormProps) {
+export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
+    const router = useRouter();
     const { toast } = useToast();
     const {
         control,
@@ -47,12 +41,12 @@ export function QuizForm({ isOpen, setIsOpen, quiz, onSubmit }: QuizFormProps) {
         handleSubmit,
         reset,
         setValue,
-        formState: { errors },
+        formState: { errors, isSubmitting },
     } = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            title: "",
-            questions: [],
+            title: quiz?.title || "",
+            questions: quiz?.questions || [],
         },
     });
 
@@ -68,7 +62,7 @@ export function QuizForm({ isOpen, setIsOpen, quiz, onSubmit }: QuizFormProps) {
         questions: [],
       });
     }
-  }, [quiz, reset, isOpen]);
+  }, [quiz, reset]);
 
   const handleFormSubmit = (data: z.infer<typeof formSchema>) => {
     try {
@@ -78,18 +72,27 @@ export function QuizForm({ isOpen, setIsOpen, quiz, onSubmit }: QuizFormProps) {
           type: z.enum(["single-choice", "multi-choice", "composite", "true-false"]),
           explanation: z.string(),
           answer: z.any(),
-      })).parse(data.questions);
+      }).or(z.object({
+          question: z.string(),
+          type: z.enum(["single-choice", "multi-choice", "composite", "true-false"]),
+          explanation: z.string(),
+          answer: z.any(),
+      }))).parse(data.questions);
       
+      const questionsWithIds = validatedQuestions.map(q => ({ ...q, id: 'id' in q ? q.id : uuidv4() }));
+
       onSubmit({
         id: quiz?.id || uuidv4(),
         title: data.title,
-        questions: validatedQuestions as Question[],
+        questions: questionsWithIds as Question[],
       });
-      setIsOpen(false);
+
       toast({
-          title: quiz ? "Quiz Updated" : "Quiz Created",
+          title: isEdit ? "Quiz Updated" : "Quiz Created",
           description: `The quiz "${data.title}" has been saved.`,
       })
+      router.push('/');
+
     } catch (error) {
         toast({
             title: "Invalid Questions JSON",
@@ -100,44 +103,46 @@ export function QuizForm({ isOpen, setIsOpen, quiz, onSubmit }: QuizFormProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{quiz ? "Edit Quiz" : "Create New Quiz"}</DialogTitle>
-          <DialogDescription>
-            {quiz ? "Update the details for your quiz." : "Fill in the details for your new quiz."}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Quiz Title</Label>
-            <Input id="title" {...register("title")} />
-            {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>}
-          </div>
-          <div>
-            <Label>Questions (JSON)</Label>
-            <Controller
-                name="questions"
-                control={control}
-                render={({ field }) => (
-                    <JsonEditor
-                        data={field.value}
-                        onEdit={(edit) => setValue('questions', edit.updated_src as Question[])}
-                        onAdd={(add) => setValue('questions', add.updated_src as Question[])}
-                        onDelete={(del) => setValue('questions', del.updated_src as Question[])}
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <Card>
+            <CardHeader>
+                <CardTitle>{isEdit ? "Edit Quiz" : "Create New Quiz"}</CardTitle>
+                <CardDescription>
+                    {isEdit ? "Update the details for your quiz." : "Fill in the details for your new quiz."}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2">
+                    <Label htmlFor="title">Quiz Title</Label>
+                    <Input id="title" {...register("title")} />
+                    {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>}
+                </div>
+                <div className="space-y-2">
+                    <Label>Questions (JSON)</Label>
+                    <Controller
+                        name="questions"
+                        control={control}
+                        render={({ field }) => (
+                            <JsonEditor
+                                data={field.value}
+                                onEdit={(edit) => setValue('questions', edit.updated_src as Question[])}
+                                onAdd={(add) => setValue('questions', add.updated_src as Question[])}
+                                onDelete={(del) => setValue('questions', del.updated_src as Question[])}
+                            />
+                        )}
                     />
-                )}
-            />
-            {errors.questions && <p className="text-sm text-red-500 mt-1">{errors.questions.message}</p>}
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Save Quiz</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+                    {errors.questions && <p className="text-sm text-red-500 mt-1">{errors.questions.message}</p>}
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => router.back()}>
+                    Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isEdit ? 'Update Quiz' : 'Create Quiz'}
+                </Button>
+            </CardFooter>
+        </Card>
+    </form>
   );
 }
