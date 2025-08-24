@@ -4,6 +4,7 @@ import { MotionConfig } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from "./header";
 import { ThemeProvider } from "./theme-provider";
+import { AnimatedBackground } from "./animated-background";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
     >
       <MotionConfig reducedMotion="user">
         <div className="flex min-h-screen flex-col bg-background">
+          <AnimatedBackground />
           <Header />
           <main className="flex-1">{children}</main>
           <Toaster />
