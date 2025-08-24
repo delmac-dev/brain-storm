@@ -148,7 +148,7 @@ function CodeBlock({ code }: { code: string }) {
 
     return (
         <div className="relative">
-            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm whitespace-pre-wrap break-words">
                 <code>{code.trim()}</code>
             </pre>
             <Button
