@@ -44,7 +44,7 @@ export function TestRunner({ quiz }: TestRunnerProps) {
       : [...currentAnswer, key];
     setSelectedAnswer(newAnswer);
   };
-  const handleTrueFalseChange = (value: boolean) => setSelectedAnswer(value);
+  const handleTrueFalseChange = (value: string) => setSelectedAnswer(value === 'true');
 
   const handleSubmit = () => {
     if (selectedAnswer === null || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
@@ -78,7 +78,12 @@ export function TestRunner({ quiz }: TestRunnerProps) {
     switch (question.type) {
       case "single-choice":
         return (
-          <RadioGroup onValueChange={handleSingleChoiceChange} disabled={isSubmitted} className="space-y-3">
+          <RadioGroup 
+            value={selectedAnswer as string || undefined}
+            onValueChange={handleSingleChoiceChange} 
+            disabled={isSubmitted} 
+            className="space-y-3"
+          >
             {question.options?.map((option) => (
               <Label key={option.key} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && (question.answer === option.key ? 'border-green-500 bg-green-500/10' : selectedAnswer === option.key ? 'border-red-500 bg-red-500/10' : ''))}>
                 <RadioGroupItem value={option.key} />
@@ -113,7 +118,12 @@ export function TestRunner({ quiz }: TestRunnerProps) {
         );
       case "true-false":
         return (
-          <RadioGroup onValueChange={(v) => handleTrueFalseChange(v === 'true')} disabled={isSubmitted} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <RadioGroup 
+            value={selectedAnswer !== null ? String(selectedAnswer) : undefined}
+            onValueChange={handleTrueFalseChange} 
+            disabled={isSubmitted} 
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          >
             {[true, false].map((value) => (
                 <Label key={String(value)} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", selectedAnswer === value && 'ring-2 ring-primary', isSubmitted && (question.answer === value ? 'border-green-500 bg-green-500/10' : selectedAnswer === value ? 'border-red-500 bg-red-500/10' : ''))}>
                   <RadioGroupItem value={String(value)} />
@@ -130,7 +140,7 @@ export function TestRunner({ quiz }: TestRunnerProps) {
   const isSubmitDisabled = useMemo(() => {
     if (isSubmitted) return true;
     return selectedAnswer === null || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0);
-  }, [selectedAnswer, isSubmitted, question]);
+  }, [selectedAnswer, isSubmitted]);
 
   if (isFinished) {
     const finalScore = Math.round((correctAnswers / quiz.questions.length) * 100);
