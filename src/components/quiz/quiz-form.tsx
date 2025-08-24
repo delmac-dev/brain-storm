@@ -289,7 +289,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                                         </p>
                                         <CodeBlock code={sampleJsonStructure} />
                                     </TabsContent>
-                                    <TabsContent value="usage">
+                                    <TabsContent value="ai-prompt">
                                         <p className="text-sm text-muted-foreground mb-4">
                                             Copy the prompt below and paste it into any AI tool that accepts file uploads (like a PDF of your questions). The AI will generate the JSON for you.
                                         </p>
@@ -343,5 +343,3 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     </form>
   );
 }
-
-    
