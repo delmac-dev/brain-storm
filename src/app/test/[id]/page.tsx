@@ -15,7 +15,7 @@ export default function TestPage() {
   const router = useRouter();
   const id = params.id as string;
   
-  const question = useQuizStore((state) => state.getQuestionById(id));
+  const quiz = useQuizStore((state) => state.getQuizById(id));
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
@@ -32,11 +32,11 @@ export default function TestPage() {
     );
   }
 
-  if (!question) {
+  if (!quiz) {
     return (
       <div className="container mx-auto flex h-[60vh] flex-col items-center justify-center text-center">
-        <h1 className="text-3xl font-bold">Question Not Found</h1>
-        <p className="mt-2 text-muted-foreground">The question you are looking for does not exist.</p>
+        <h1 className="text-3xl font-bold">Quiz Not Found</h1>
+        <p className="mt-2 text-muted-foreground">The quiz you are looking for does not exist.</p>
         <Button asChild className="mt-6">
           <Link href="/">
             <ChevronLeft className="mr-2 h-4 w-4" />
@@ -53,7 +53,7 @@ export default function TestPage() {
         <ChevronLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
-      <TestRunner question={question} />
+      <TestRunner quiz={quiz} />
     </div>
   );
 }

@@ -28,8 +28,12 @@ export interface Question {
   compositeOptions?: CompositeOptions;
   answer: Answer;
   explanation: string;
-  lastResult?: { score: number; timestamp: string; durationSeconds?: number };
-  attempts?: number;
-  tags?: string[];
-  difficulty?: "easy" | "medium" | "hard";
+}
+
+export interface Quiz {
+    id: string;
+    title: string;
+    questions: Question[];
+    lastResult?: { score: number; timestamp: string };
+    attempts?: number;
 }

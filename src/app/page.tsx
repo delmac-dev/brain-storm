@@ -4,14 +4,14 @@ import { motion } from "framer-motion";
 import Link from 'next/link';
 
 import { Button } from "@/components/ui/button";
-import { QuestionCard } from "@/components/quiz/question-card";
+import { QuizCard } from "@/components/quiz/quiz-card";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { useQuizStore } from "@/store/quiz";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileQuestion } from "lucide-react";
 
 export default function Home() {
-  const questions = useQuizStore((state) => state.questions);
+  const quizzes = useQuizStore((state) => state.quizzes);
   const hasMounted = useHasMounted();
 
   const containerVariants = {
@@ -58,22 +58,22 @@ export default function Home() {
           Welcome to BrainBoost
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Select a quiz to test your knowledge or visit the editor to create new questions.
+          Select a quiz to test your knowledge or visit the editor to create new quizzes.
         </p>
       </motion.div>
 
       {!hasMounted ? (
         renderSkeletons()
-      ) : questions.length > 0 ? (
+      ) : quizzes.length > 0 ? (
         <motion.div
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {questions.map((question) => (
-            <motion.div key={question.id} variants={itemVariants}>
-              <QuestionCard question={question} />
+          {quizzes.map((quiz) => (
+            <motion.div key={quiz.id} variants={itemVariants}>
+              <QuizCard quiz={quiz} />
             </motion.div>
           ))}
         </motion.div>
@@ -85,13 +85,13 @@ export default function Home() {
         >
           <FileQuestion className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-medium text-foreground">
-            No questions yet
+            No quizzes yet
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Get started by creating a new question.
+            Get started by creating a new quiz in the editor.
           </p>
           <Button asChild className="mt-6">
-            <Link href="/editor">Create Question</Link>
+            <Link href="/editor">Create Quiz</Link>
           </Button>
         </motion.div>
       )}

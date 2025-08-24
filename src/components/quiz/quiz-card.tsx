@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Brain, CheckCircle, Clock, Percent, Repeat } from "lucide-react";
-import type { Question } from "@/lib/types";
+import { Brain, CheckCircle, Clock, Percent, Repeat, FileJson } from "lucide-react";
+import type { Quiz } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,63 +17,51 @@ import {
 import { useQuizStore } from "@/store/quiz";
 import { useToast } from "@/hooks/use-toast";
 
-interface QuestionCardProps {
-  question: Question;
+interface QuizCardProps {
+  quiz: Quiz;
 }
 
-export function QuestionCard({ question }: QuestionCardProps) {
+export function QuizCard({ quiz }: QuizCardProps) {
     const retakeTest = useQuizStore((state) => state.retakeTest);
     const { toast } = useToast();
 
     const handleRetake = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        retakeTest(question.id);
+        retakeTest(quiz.id);
         toast({
             title: "Test Reset",
-            description: `You can now retake the test for "${question.question}"`,
+            description: `You can now retake the test for "${quiz.title}"`,
         })
     }
-    
-  const difficultyMap: Record<string, "default" | "secondary" | "destructive"> = {
-    easy: "default",
-    medium: "secondary",
-    hard: "destructive",
-  };
 
   return (
     <motion.div
       whileHover={{ y: -5, boxShadow: "0px 10px 20px rgba(0,0,0,0.1)" }}
       className="h-full"
     >
-      <Link href={`/test/${question.id}`} className="h-full block">
+      <Link href={`/test/${quiz.id}`} className="h-full block">
         <Card className="flex h-full flex-col transition-all duration-300 hover:border-primary">
           <CardHeader>
             <div className="flex justify-between items-start">
-              <CardTitle className="text-lg leading-tight pr-4">{question.question}</CardTitle>
-              {question.difficulty && (
-                <Badge variant={difficultyMap[question.difficulty]}>
-                  {question.difficulty}
-                </Badge>
-              )}
+              <CardTitle className="text-lg leading-tight pr-4">{quiz.title}</CardTitle>
             </div>
-            {question.tags && question.tags.length > 0 && (
-              <CardDescription className="pt-2">
-                {question.tags.join(', ')}
-              </CardDescription>
-            )}
+            <CardDescription className="pt-2 flex items-center text-xs text-muted-foreground">
+              <FileJson className="mr-2 h-3 w-3" />
+              {quiz.questions.length} questions
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow">
-            {question.lastResult ? (
+            {quiz.lastResult ? (
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Percent className="mr-2 h-4 w-4" />
-                  <span>Last Score: {question.lastResult.score}%</span>
-                  {question.lastResult.score === 100 && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
+                  <span>Last Score: {quiz.lastResult.score}%</span>
+                  {quiz.lastResult.score === 100 && <CheckCircle className="ml-2 h-4 w-4 text-green-500" />}
                 </div>
                 <div className="flex items-center">
                   <Clock className="mr-2 h-4 w-4" />
-                  <span>{new Date(question.lastResult.timestamp).toLocaleString()}</span>
+                  <span>{new Date(quiz.lastResult.timestamp).toLocaleString()}</span>
                 </div>
               </div>
             ) : (
@@ -89,7 +76,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
                     <Brain className="mr-2 h-4 w-4"/> Start Test
                 </div>
             </Button>
-            {question.lastResult && (
+            {quiz.lastResult && (
               <Button size="sm" variant="outline" onClick={handleRetake}>
                 <Repeat className="mr-2 h-4 w-4" /> Retake
               </Button>

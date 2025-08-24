@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Lightbulb, ChevronRight, Check } from "lucide-react";
 
-import type { Answer, Question, Option as OptionType, CompositeStatement, CompositeChoice } from "@/lib/types";
+import type { Answer, Question, Quiz } from "@/lib/types";
 import { useQuizStore } from "@/store/quiz";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { isAnswerCorrect } from "@/lib/quiz-helpers";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,26 +17,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 interface TestRunnerProps {
-  question: Question;
+  quiz: Quiz;
 }
 
-export function TestRunner({ question }: TestRunnerProps) {
+export function TestRunner({ quiz }: TestRunnerProps) {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Answer | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [startTime] = useState(Date.now());
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const submitAnswer = useQuizStore((state) => state.submitAnswer);
+  const { submitTest } = useQuizStore();
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    setSelectedAnswer(null);
-    setIsSubmitted(false);
-    setIsCorrect(null);
-  }, [question.id]);
+  const question = quiz.questions[currentQuestionIndex];
 
   const handleSingleChoiceChange = (value: string) => setSelectedAnswer(value);
   const handleMultiChoiceChange = (key: string) => {
@@ -61,10 +60,22 @@ export function TestRunner({ question }: TestRunnerProps) {
       return;
     }
 
-    const duration = Math.round((Date.now() - startTime) / 1000);
-    const correct = submitAnswer(question.id, selectedAnswer, duration);
-    setIsCorrect(correct);
+    if (isAnswerCorrect(question, selectedAnswer)) {
+        setCorrectAnswers(correctAnswers + 1);
+    }
     setIsSubmitted(true);
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedAnswer(null);
+      setIsSubmitted(false);
+    } else {
+      const finalScore = Math.round((correctAnswers / quiz.questions.length) * 100);
+      submitTest(quiz.id, finalScore);
+      setIsFinished(true);
+    }
   };
 
   const renderOptions = () => {
@@ -141,15 +152,39 @@ export function TestRunner({ question }: TestRunnerProps) {
     return selectedAnswer === null || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0);
   }, [selectedAnswer, isSubmitted, question]);
 
+  if (isFinished) {
+    const finalScore = Math.round((correctAnswers / quiz.questions.length) * 100);
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-3xl">Test Complete!</CardTitle>
+                <CardDescription>You have completed the {quiz.title} test.</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+                <p className="text-lg">Your score:</p>
+                <p className="text-6xl font-bold text-primary my-4">{finalScore}%</p>
+                <p className="text-muted-foreground">{correctAnswers} out of {quiz.questions.length} correct</p>
+            </CardContent>
+            <CardFooter>
+                <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
+                    Back to Quizzes <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-2xl">{question.question}</CardTitle>
+        <CardTitle className="text-2xl">{quiz.title}</CardTitle>
         <CardDescription>
-          Attempts: {question.attempts || 0}
+          Question {currentQuestionIndex + 1} of {quiz.questions.length}
         </CardDescription>
+        <Progress value={((currentQuestionIndex + 1) / quiz.questions.length) * 100} className="mt-2" />
       </CardHeader>
       <CardContent>
+        <p className="mb-6 font-semibold text-lg">{question.question}</p>
         {renderOptions()}
         {isSubmitted && (
           <motion.div
@@ -157,9 +192,9 @@ export function TestRunner({ question }: TestRunnerProps) {
             animate={{ opacity: 1, y: 0 }}
             className="mt-6"
           >
-            <Alert variant={isCorrect ? "default" : "destructive"} className={cn(isCorrect ? "border-green-500 text-green-700 dark:text-green-400" : "border-red-500")}>
-              {isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-              <AlertTitle>{isCorrect ? "Correct!" : "Incorrect"}</AlertTitle>
+            <Alert variant={isAnswerCorrect(question, selectedAnswer) ? "default" : "destructive"} className={cn(isAnswerCorrect(question, selectedAnswer) ? "border-green-500 text-green-700 dark:text-green-400" : "border-red-500")}>
+              {isAnswerCorrect(question, selectedAnswer) ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+              <AlertTitle>{isAnswerCorrect(question, selectedAnswer) ? "Correct!" : "Incorrect"}</AlertTitle>
               <AlertDescription className="mt-4 flex items-start">
                 <Lightbulb className="mr-2 h-4 w-4 flex-shrink-0 mt-1" />
                 <span><span className="font-semibold">Explanation:</span> {question.explanation}</span>
@@ -174,8 +209,9 @@ export function TestRunner({ question }: TestRunnerProps) {
             Submit Answer <Check className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={() => router.push('/')} className="w-full sm:w-auto">
-            Back to Quizzes <ChevronRight className="ml-2 h-4 w-4" />
+          <Button onClick={handleNext} className="w-full sm:w-auto">
+            {currentQuestionIndex < quiz.questions.length - 1 ? 'Next Question' : 'Finish Test'}
+            <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
         )}
       </CardFooter>
