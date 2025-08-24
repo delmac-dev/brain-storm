@@ -23,9 +23,34 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
     loading: () => <Skeleton className="h-[400px] w-full" />,
 });
 
+const questionSchema = z.object({
+  id: z.string().optional(),
+  question: z.string().min(1, "Question text cannot be empty"),
+  type: z.enum(["single-choice", "multi-choice", "composite", "true-false"]),
+  explanation: z.string().min(1, "Explanation cannot be empty"),
+  answer: z.any(),
+  options: z.array(z.any()).optional(),
+  compositeOptions: z.array(z.string()).optional(),
+});
+
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  questions: z.string().min(1, "At least one question is required"),
+  questions: z.string().refine((val) => {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) && parsed.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }, { message: "Questions must be a non-empty JSON array." }).refine((val) => {
+    try {
+        const parsed = JSON.parse(val);
+        z.array(questionSchema).parse(parsed);
+        return true;
+    } catch (e) {
+        return false;
+    }
+  }, { message: "The questions JSON structure is invalid." }),
 });
 
 interface QuizFormProps {
@@ -79,17 +104,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     try {
       const questionsParsed = JSON.parse(data.questions);
 
-      const validatedQuestions = z.array(z.object({
-          id: z.string().optional(),
-          question: z.string(),
-          type: z.enum(["single-choice", "multi-choice", "composite", "true-false"]),
-          explanation: z.string(),
-          answer: z.any(),
-          options: z.array(z.any()).optional(),
-          compositeOptions: z.array(z.string()).optional(),
-      })).parse(questionsParsed);
-      
-      const questionsWithIds = validatedQuestions.map(q => ({ ...q, id: q.id || uuidv4() }));
+      const questionsWithIds = questionsParsed.map((q: any) => ({ ...q, id: q.id || uuidv4() }));
 
       onSubmit({
         id: quiz?.id || uuidv4(),
@@ -104,16 +119,31 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
       router.push('/');
 
     } catch (error) {
+        // This catch block may not be strictly necessary with Zod, but serves as a fallback.
         toast({
             title: "Invalid Questions JSON",
-            description: "The questions JSON is not correctly formatted or invalid. Please check the structure and try again.",
+            description: "The questions JSON is not correctly formatted. Please check the structure and try again.",
             variant: "destructive",
         })
     }
   };
 
+  const onInvalid = (errors: any) => {
+    let errorMessage = "Please fix the errors in the form.";
+    if (errors.title) {
+        errorMessage = errors.title.message;
+    } else if (errors.questions) {
+        errorMessage = errors.questions.message;
+    }
+    toast({
+        title: "Validation Error",
+        description: errorMessage,
+        variant: "destructive",
+    })
+  }
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
+    <form onSubmit={handleSubmit(handleFormSubmit, onInvalid)}>
         <Card>
             <CardHeader>
                 <CardTitle>{isEdit ? "Edit Quiz" : "Create New Quiz"}</CardTitle>
@@ -149,7 +179,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                                 }}
                                 onMount={handleEditorDidMount}
                                 onChange={(value) => {
-                                    setValue('questions', value || "");
+                                    setValue('questions', value || "", { shouldValidate: true });
                                     setTimeout(() => {
                                       editorRef.current?.getAction('editor.action.formatDocument')?.run();
                                     }, 100);
