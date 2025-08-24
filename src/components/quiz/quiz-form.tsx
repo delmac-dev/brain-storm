@@ -23,13 +23,18 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
     loading: () => <Skeleton className="h-[400px] w-full" />,
 });
 
+const optionSchema = z.object({
+    key: z.string(),
+    text: z.string(),
+});
+
 const questionSchema = z.object({
   id: z.string().optional(),
   question: z.string().min(1, "Question text cannot be empty"),
   type: z.enum(["single-choice", "multi-choice", "composite", "true-false"]),
   explanation: z.string().min(1, "Explanation cannot be empty"),
   answer: z.any(),
-  options: z.array(z.any()).optional(),
+  options: z.array(optionSchema).optional(),
   compositeOptions: z.array(z.string()).optional(),
 });
 
