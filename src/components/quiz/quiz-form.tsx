@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import type EditorType from "monaco-editor";
+import { HelpCircle, Copy } from "lucide-react";
 
 import type { Quiz, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,9 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
     ssr: false,
@@ -53,15 +57,111 @@ const formSchema = z.object({
         z.array(questionSchema).parse(parsed);
         return true;
     } catch (e) {
+        if (e instanceof z.ZodError) {
+            console.error(e.errors);
+        }
         return false;
     }
-  }, { message: "The questions JSON structure is invalid." }),
+  }, { message: "The questions JSON structure is invalid. Check the help section for the correct format." }),
 });
 
 interface QuizFormProps {
   quiz?: Quiz | null;
   onSubmit: (data: Quiz) => void;
   isEdit?: boolean;
+}
+
+const sampleJsonStructure = `
+[
+  {
+    "id": "auto-generated-uuid",
+    "question": "What is the capital of France?",
+    "type": "single-choice",
+    "options": [
+      { "key": "a", "text": "Berlin" },
+      { "key": "b", "text": "Madrid" },
+      { "key": "c", "text": "Paris" },
+      { "key": "d", "text": "Rome" }
+    ],
+    "answer": "c",
+    "explanation": "Paris is the capital of France."
+  },
+  {
+    "id": "auto-generated-uuid",
+    "question": "Which of these are primary colors?",
+    "type": "multi-choice",
+    "options": [
+      { "key": "a", "text": "Red" },
+      { "key": "b", "text": "Green" },
+      { "key": "c", "text": "Blue" }
+    ],
+    "answer": ["a", "c"],
+    "explanation": "Red and Blue are primary colors."
+  },
+  {
+    "id": "auto-generated-uuid",
+    "question": "The sky is blue.",
+    "type": "true-false",
+    "answer": true,
+    "explanation": "The sky appears blue due to Rayleigh scattering."
+  },
+  {
+    "id": "auto-generated-uuid",
+    "question": "Which statements are correct?",
+    "type": "composite",
+    "compositeOptions": [
+      "(i) The sun is a star.",
+      "(ii) The earth is flat."
+    ],
+    "options": [
+      { "key": "a", "text": "Only (i)" },
+      { "key": "b", "text": "Only (ii)" },
+      { "key": "c", "text": "Both are correct" }
+    ],
+    "answer": ["a"],
+    "explanation": "The sun is a star, but the Earth is spherical."
+  }
+]
+`;
+
+const aiPrompt = `
+You are an expert in creating educational materials. Your task is to convert the questions from the attached file into a valid JSON format that follows a specific schema.
+
+For each question, you must provide:
+1. A unique "id" (you can use a placeholder like "uuid-1", "uuid-2").
+2. The "question" text.
+3. The "type" of the question. Supported types are "single-choice", "multi-choice", "true-false", and "composite".
+4. An "options" array for "single-choice", "multi-choice", and "composite" types. Each option must have a "key" and a "text".
+5. A "compositeOptions" array of strings for "composite" questions, containing the statements to be evaluated.
+6. The correct "answer". This should be the option key(s) or a boolean for true/false.
+7. A concise "explanation" for why the answer is correct.
+
+Analyze the questions in the provided file and generate a JSON array of question objects that strictly adheres to this structure. Ensure the JSON is valid.
+`;
+
+function CodeBlock({ code }: { code: string }) {
+    const { toast } = useToast();
+    const handleCopy = () => {
+        navigator.clipboard.writeText(code);
+        toast({ title: "Copied to clipboard!" });
+    };
+
+    return (
+        <div className="relative">
+            <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+                <code>{code.trim()}</code>
+            </pre>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7"
+                onClick={handleCopy}
+            >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">Copy</span>
+            </Button>
+        </div>
+    );
 }
 
 export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
@@ -124,7 +224,6 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
       router.push('/');
 
     } catch (error) {
-        // This catch block may not be strictly necessary with Zod, but serves as a fallback.
         toast({
             title: "Invalid Questions JSON",
             description: "The questions JSON is not correctly formatted. Please check the structure and try again.",
@@ -163,7 +262,43 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                     {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label>Questions (JSON)</Label>
+                    <div className="flex items-center justify-between">
+                        <Label>Questions (JSON)</Label>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
+                                    <HelpCircle className="h-4 w-4" />
+                                    Help
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>JSON Structure Help</DialogTitle>
+                                    <DialogDescription>
+                                        Use the tabs below to understand the required JSON format and how to generate it.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <Tabs defaultValue="structure">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="structure">Structure</TabsTrigger>
+                                        <TabsTrigger value="ai-prompt">AI Prompt</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="structure">
+                                        <p className="text-sm text-muted-foreground mb-4">
+                                            Your JSON must be an array of question objects. Here is an example of the structure:
+                                        </p>
+                                        <CodeBlock code={sampleJsonStructure} />
+                                    </TabsContent>
+                                    <TabsContent value="usage">
+                                        <p className="text-sm text-muted-foreground mb-4">
+                                            Copy the prompt below and paste it into any AI tool that accepts file uploads (like a PDF of your questions). The AI will generate the JSON for you.
+                                        </p>
+                                        <CodeBlock code={aiPrompt} />
+                                    </TabsContent>
+                                </Tabs>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                     <Controller
                         name="questions"
                         control={control}
@@ -208,3 +343,5 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     </form>
   );
 }
+
+    
