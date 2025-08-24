@@ -109,13 +109,14 @@ export function TestRunner({ quiz }: TestRunnerProps) {
         );
       case "true-false":
         return (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <RadioGroup onValueChange={(v) => handleTrueFalseChange(v === 'true')} disabled={isSubmitted} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[true, false].map((value) => (
-                <Button key={String(value)} variant="outline" size="lg" onClick={() => handleTrueFalseChange(value)} disabled={isSubmitted} className={cn("h-auto py-4 text-base", selectedAnswer === value && 'ring-2 ring-primary', isSubmitted && (question.answer === value ? 'border-green-500 bg-green-500/10' : selectedAnswer === value ? 'border-red-500 bg-red-500/10' : ''))}>
-                    {String(value)}
-                </Button>
+                <Label key={String(value)} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", selectedAnswer === value && 'ring-2 ring-primary', isSubmitted && (question.answer === value ? 'border-green-500 bg-green-500/10' : selectedAnswer === value ? 'border-red-500 bg-red-500/10' : ''))}>
+                  <RadioGroupItem value={String(value)} />
+                  <span>{String(value)}</span>
+                </Label>
             ))}
-          </div>
+          </RadioGroup>
         );
       case "composite":
         return (
