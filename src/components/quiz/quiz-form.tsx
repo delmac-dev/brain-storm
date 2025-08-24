@@ -40,6 +40,20 @@ const questionSchema = z.object({
   answer: z.any(),
   options: z.array(optionSchema).optional(),
   compositeOptions: z.array(z.string()).optional(),
+}).refine(data => {
+    if (data.type === 'multi-choice') {
+        return Array.isArray(data.answer);
+    }
+    if (data.type === 'single-choice' || data.type === 'composite') {
+        return typeof data.answer === 'string';
+    }
+    if (data.type === 'true-false') {
+        return typeof data.answer === 'boolean';
+    }
+    return true;
+}, {
+    message: "The answer format does not match the question type.",
+    path: ["answer"],
 });
 
 const formSchema = z.object({
@@ -57,8 +71,6 @@ const formSchema = z.object({
         z.array(questionSchema).parse(parsed);
         return true;
     } catch (e) {
-        if (e instanceof z.ZodError) {
-        }
         return false;
     }
   }, { message: "The questions JSON structure is invalid. Check the help section for the correct format." }),
@@ -117,7 +129,7 @@ const sampleJsonStructure = `
       { "key": "b", "text": "Only (ii)" },
       { "key": "c", "text": "Both are correct" }
     ],
-    "answer": ["a"],
+    "answer": "a",
     "explanation": "The sun is a star, but the Earth is spherical."
   }
 ]
@@ -132,7 +144,7 @@ For each question, you must provide:
 3. The "type" of the question. Supported types are "single-choice", "multi-choice", "true-false", and "composite".
 4. An "options" array for "single-choice", "multi-choice", and "composite" types. Each option must have a "key" and a "text".
 5. A "compositeOptions" array of strings for "composite" questions, containing the statements to be evaluated.
-6. The correct "answer". This should be the option key(s) or a boolean for true/false.
+6. The correct "answer". This should be the option key for single-choice/composite, an array of keys for multi-choice, or a boolean for true/false.
 7. A concise "explanation" for why the answer is correct.
 
 Analyze the questions in the provided file and generate a JSON array of question objects that strictly adheres to this structure. Ensure the JSON is valid.

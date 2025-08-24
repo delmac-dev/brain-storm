@@ -4,7 +4,7 @@ export interface Option {
   text: string;
 }
 
-export type Answer = string | string[] | boolean | Record<string, string>;
+export type Answer = string | string[] | boolean;
 
 export interface Question {
   id: string;

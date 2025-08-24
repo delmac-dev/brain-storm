@@ -77,26 +77,9 @@ export function TestRunner({ quiz }: TestRunnerProps) {
   const renderOptions = () => {
     switch (question.type) {
       case "single-choice":
-        return (
-          <RadioGroup 
-            value={selectedAnswer as string || undefined}
-            onValueChange={handleSingleChoiceChange} 
-            disabled={isSubmitted} 
-            className="space-y-3"
-            key={question.id}
-          >
-            {question.options?.map((option) => (
-              <Label key={`${question.id}-${option.key}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && (question.answer === option.key ? 'border-green-500 bg-green-500/10' : selectedAnswer === option.key ? 'border-red-500 bg-red-500/10' : ''))}>
-                <RadioGroupItem value={option.key} id={`${question.id}-${option.key}`} />
-                <span>{option.text}</span>
-              </Label>
-            ))}
-          </RadioGroup>
-        );
-      case "multi-choice":
       case "composite":
         return (
-          <div className="space-y-3" key={question.id}>
+          <div key={question.id}>
             {question.type === 'composite' && (
               <div className="space-y-2 rounded-md bg-muted p-4 mb-4">
                 {question.compositeOptions?.map((statement, index) => (
@@ -104,6 +87,24 @@ export function TestRunner({ quiz }: TestRunnerProps) {
                 ))}
               </div>
             )}
+            <RadioGroup 
+              value={selectedAnswer as string || undefined}
+              onValueChange={handleSingleChoiceChange} 
+              disabled={isSubmitted} 
+              className="space-y-3"
+            >
+              {question.options?.map((option) => (
+                <Label key={`${question.id}-${option.key}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && (question.answer === option.key ? 'border-green-500 bg-green-500/10' : selectedAnswer === option.key ? 'border-red-500 bg-red-500/10' : ''))}>
+                  <RadioGroupItem value={option.key} id={`${question.id}-${option.key}`} />
+                  <span>{option.text}</span>
+                </Label>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+      case "multi-choice":
+        return (
+          <div className="space-y-3" key={question.id}>
             {question.options?.map((option) => (
               <Label key={`${question.id}-${option.key}`} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && ((question.answer as string[]).includes(option.key) ? 'border-green-500 bg-green-500/10' : (selectedAnswer as string[] | null)?.includes(option.key) ? 'border-red-500 bg-red-500/10' : ''))}>
                 <Checkbox
