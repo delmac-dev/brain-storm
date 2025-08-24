@@ -1,18 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from 'next/link';
+import { PlusCircle, FileQuestion } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { QuizCard } from "@/components/quiz/quiz-card";
 import { useHasMounted } from "@/hooks/use-has-mounted";
 import { useQuizStore } from "@/store/quiz";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileQuestion } from "lucide-react";
+import { QuizForm } from "@/components/quiz/quiz-form";
+import type { Quiz } from "@/lib/types";
 
 export default function Home() {
-  const quizzes = useQuizStore((state) => state.quizzes);
+  const { quizzes, addQuiz, updateQuiz, deleteQuiz } = useQuizStore();
   const hasMounted = useHasMounted();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -30,6 +35,28 @@ export default function Home() {
       y: 0,
       opacity: 1,
     },
+  };
+  
+  const handleNewQuiz = () => {
+    setEditingQuiz(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditQuiz = (quiz: Quiz) => {
+    setEditingQuiz(quiz);
+    setIsFormOpen(true);
+  }
+
+  const handleDeleteQuiz = (quizId: string) => {
+    deleteQuiz(quizId);
+  }
+
+  const handleFormSubmit = (quiz: Quiz) => {
+    if (editingQuiz) {
+      updateQuiz(quiz);
+    } else {
+      addQuiz(quiz);
+    }
   };
 
   const renderSkeletons = () => (
@@ -52,14 +79,20 @@ export default function Home() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8"
+        className="mb-8 flex flex-wrap items-center justify-between gap-4"
       >
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Welcome to BrainBoost
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Select a quiz to test your knowledge or visit the editor to create new quizzes.
-        </p>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+            Your Quizzes
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Select a quiz to test your knowledge or create a new one.
+          </p>
+        </div>
+        <Button onClick={handleNewQuiz}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Quiz
+        </Button>
       </motion.div>
 
       {!hasMounted ? (
@@ -73,7 +106,11 @@ export default function Home() {
         >
           {quizzes.map((quiz) => (
             <motion.div key={quiz.id} variants={itemVariants}>
-              <QuizCard quiz={quiz} />
+              <QuizCard 
+                quiz={quiz} 
+                onEdit={() => handleEditQuiz(quiz)} 
+                onDelete={() => handleDeleteQuiz(quiz.id)}
+              />
             </motion.div>
           ))}
         </motion.div>
@@ -88,13 +125,21 @@ export default function Home() {
             No quizzes yet
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Get started by creating a new quiz in the editor.
+            Get started by creating a new quiz.
           </p>
-          <Button asChild className="mt-6">
-            <Link href="/editor">Create Quiz</Link>
+          <Button onClick={handleNewQuiz} className="mt-6">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Quiz
           </Button>
         </motion.div>
       )}
+
+      <QuizForm
+        isOpen={isFormOpen}
+        setIsOpen={setIsFormOpen}
+        quiz={editingQuiz}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   );
 }

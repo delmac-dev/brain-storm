@@ -11,7 +11,6 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 
 const navLinks = [
   { href: "/", label: "Quizzes" },
-  { href: "/editor", label: "Editor" },
   { href: "/dashboard", label: "Dashboard" },
 ];
 

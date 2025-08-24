@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { v4 as uuidv4 } from 'uuid';
 import type { Quiz } from '@/lib/types';
 import { sampleQuizzes } from '@/data/sample-questions';
 
@@ -8,6 +9,9 @@ interface QuizState {
   quizzes: Quiz[];
   getQuizById: (id: string) => Quiz | undefined;
   setQuizzes: (quizzes: Quiz[]) => void;
+  addQuiz: (quiz: Omit<Quiz, 'id'>) => void;
+  updateQuiz: (quiz: Quiz) => void;
+  deleteQuiz: (quizId: string) => void;
   submitTest: (quizId: string, score: number) => void;
   retakeTest: (quizId: string) => void;
 }
@@ -21,6 +25,24 @@ export const useQuizStore = create<QuizState>()(
       },
       setQuizzes: (quizzes) => {
         set({ quizzes });
+      },
+      addQuiz: (quiz) => {
+        set(state => {
+            state.quizzes.push({ ...quiz, id: uuidv4() });
+        });
+      },
+      updateQuiz: (quiz) => {
+        set(state => {
+            const index = state.quizzes.findIndex(q => q.id === quiz.id);
+            if (index !== -1) {
+                state.quizzes[index] = quiz;
+            }
+        });
+      },
+      deleteQuiz: (quizId) => {
+        set(state => {
+            state.quizzes = state.quizzes.filter(q => q.id !== quizId);
+        });
       },
       submitTest: (quizId, score) => {
         set(state => {
