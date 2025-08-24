@@ -271,7 +271,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
                                     Help
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl w-full max-h-[90svh] overflow-y-auto sm:max-w-2xl">
                                 <DialogHeader>
                                     <DialogTitle>JSON Structure Help</DialogTitle>
                                     <DialogDescription>
@@ -343,3 +343,5 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
     </form>
   );
 }
+
+    
