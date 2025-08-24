@@ -1,3 +1,4 @@
+
 import type { Quiz } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -60,26 +61,21 @@ export const sampleQuizzes: Quiz[] = [
       },
       {
         id: uuidv4(),
-        question: "Match the planets to their description.",
+        question: "Which of the following statements about planets are true?",
         type: "composite",
-        compositeOptions: {
-          statements: [
-            { id: "s1", text: "The largest planet in our solar system." },
-            { id: "s2", text: "Known as the Red Planet." },
-            { id: "s3", text: "Has prominent rings." },
-          ],
-          choices: [
-            { key: "c1", text: "Mars" },
-            { key: "c2", text: "Jupiter" },
-            { key: "c3", text: "Saturn" },
-          ],
-        },
-        answer: {
-          s1: "c2",
-          s2: "c1",
-          s3: "c3",
-        },
-        explanation: "Jupiter is the largest planet, Mars is the Red Planet, and Saturn is famous for its rings.",
+        compositeOptions: [
+          "(i) Jupiter is the largest planet in our solar system.",
+          "(ii) Mars is known as the Blue Planet.",
+          "(iii) Saturn is the only planet with rings."
+        ],
+        options: [
+          { key: "a", text: "Only (i) is correct." },
+          { key: "b", text: "(i) and (ii) are correct." },
+          { key: "c", text: "All statements are correct." },
+          { key: "d", text: "None of the statements are correct." }
+        ],
+        answer: ["a"],
+        explanation: "Only statement (i) is correct. Mars is the Red Planet, and other planets like Jupiter also have rings, though Saturn's are the most prominent.",
       },
     ]
   },

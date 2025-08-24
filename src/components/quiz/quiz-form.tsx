@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -85,7 +86,7 @@ export function QuizForm({ quiz, onSubmit, isEdit = false }: QuizFormProps) {
           explanation: z.string(),
           answer: z.any(),
           options: z.array(z.any()).optional(),
-          compositeOptions: z.any().optional(),
+          compositeOptions: z.array(z.string()).optional(),
       })).parse(questionsParsed);
       
       const questionsWithIds = validatedQuestions.map(q => ({ ...q, id: q.id || uuidv4() }));

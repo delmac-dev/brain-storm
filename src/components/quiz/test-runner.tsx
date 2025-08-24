@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -16,7 +17,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 
 interface TestRunnerProps {
@@ -45,13 +45,9 @@ export function TestRunner({ quiz }: TestRunnerProps) {
     setSelectedAnswer(newAnswer);
   };
   const handleTrueFalseChange = (value: boolean) => setSelectedAnswer(value);
-  const handleCompositeChange = (statementId: string, choiceKey: string) => {
-      const currentAnswer = (selectedAnswer as Record<string, string> | null) || {};
-      setSelectedAnswer({ ...currentAnswer, [statementId]: choiceKey });
-  }
 
   const handleSubmit = () => {
-    if (selectedAnswer === null) {
+    if (selectedAnswer === null || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0)) {
       toast({
         title: "No answer selected",
         description: "Please select an answer before submitting.",
@@ -92,10 +88,18 @@ export function TestRunner({ quiz }: TestRunnerProps) {
           </RadioGroup>
         );
       case "multi-choice":
+      case "composite":
         return (
           <div className="space-y-3">
+            {question.type === 'composite' && (
+              <div className="space-y-2 rounded-md bg-muted p-4 mb-4">
+                {question.compositeOptions?.map((statement, index) => (
+                  <p key={index} className="text-muted-foreground">{statement}</p>
+                ))}
+              </div>
+            )}
             {question.options?.map((option) => (
-              <Label key={option.key} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && ((question.answer as string[]).includes(option.key) ? 'border-green-500 bg-green-500/10' : (selectedAnswer as string[]).includes(option.key) ? 'border-red-500 bg-red-500/10' : ''))}>
+              <Label key={option.key} className={cn("flex items-center space-x-3 rounded-md border p-4 transition-all", isSubmitted && ((question.answer as string[]).includes(option.key) ? 'border-green-500 bg-green-500/10' : (selectedAnswer as string[] | null)?.includes(option.key) ? 'border-red-500 bg-red-500/10' : ''))}>
                 <Checkbox
                   value={option.key}
                   checked={(selectedAnswer as string[] | null)?.includes(option.key)}
@@ -118,26 +122,6 @@ export function TestRunner({ quiz }: TestRunnerProps) {
             ))}
           </RadioGroup>
         );
-      case "composite":
-        return (
-            <div className="space-y-4">
-                {question.compositeOptions?.statements.map((statement) => (
-                    <div key={statement.id} className={cn("rounded-md border p-4", isSubmitted && ((question.answer as Record<string, string>)[statement.id] === (selectedAnswer as Record<string, string>)?.[statement.id] ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'))}>
-                        <p className="mb-2 font-medium">{statement.text}</p>
-                        <Select onValueChange={(value) => handleCompositeChange(statement.id, value)} disabled={isSubmitted}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a match..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {question.compositeOptions?.choices.map((choice) => (
-                                    <SelectItem key={choice.key} value={choice.key}>{choice.text}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                ))}
-            </div>
-        )
       default:
         return null;
     }
@@ -145,11 +129,6 @@ export function TestRunner({ quiz }: TestRunnerProps) {
   
   const isSubmitDisabled = useMemo(() => {
     if (isSubmitted) return true;
-    if (question.type === 'composite') {
-        const selectedCount = Object.keys(selectedAnswer || {}).length;
-        const requiredCount = question.compositeOptions?.statements.length || 0;
-        return selectedCount !== requiredCount;
-    }
     return selectedAnswer === null || (Array.isArray(selectedAnswer) && selectedAnswer.length === 0);
   }, [selectedAnswer, isSubmitted, question]);
 
